@@ -42,6 +42,7 @@
 #include <linux/io.h>
 #include <linux/reboot.h>
 #include <linux/bcd.h>
+#include <linux/platform_device.h>
 
 #include <asm/setup.h>
 #include <asm/efi.h>
@@ -875,6 +876,22 @@ void __init efi_enter_virtual_mode(void)
 			 EFI_VARIABLE_RUNTIME_ACCESS,
 			 0, NULL);
 }
+
+static struct platform_device rtc_efi_dev = {
+	.name = "rtc-efi",
+	.id = -1,
+};
+
+static int __init rtc_init(void)
+{
+	if (efi_enabled(EFI_RUNTIME_SERVICES) &&
+	    platform_device_register(&rtc_efi_dev) < 0)
+		pr_err("unable to register rtc-efi device...\n");
+
+	/* not necessarily an error */
+	return 0;
+}
+arch_initcall(rtc_init);
 
 /*
  * Convenience functions to obtain memory types and attributes
