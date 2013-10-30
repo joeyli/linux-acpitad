@@ -134,6 +134,11 @@ void acpi_ec_block_transactions(void);
 void acpi_ec_unblock_transactions(void);
 void acpi_ec_unblock_transactions_early(void);
 
+/* --------------------------------------------------------------------------
+				Time and Alarm Device
+   -------------------------------------------------------------------------- */
+int acpi_tad_init(void);
+
 /*--------------------------------------------------------------------------
                                   Suspend/Resume
   -------------------------------------------------------------------------- */

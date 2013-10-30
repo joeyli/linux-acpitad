@@ -50,6 +50,9 @@ acpi-$(CONFIG_ACPI_NUMA)	+= numa.o
 ifdef CONFIG_ACPI_VIDEO
 acpi-y				+= video_detect.o
 endif
+ifdef CONFIG_X86
+acpi-y                         += acpi_tad.o
+endif
 
 # These are (potentially) separate modules
 
