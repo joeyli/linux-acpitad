@@ -147,6 +147,12 @@ int acpi_ec_add_query_handler(struct acpi_ec *ec, u8 query_bit,
 void acpi_ec_remove_query_handler(struct acpi_ec *ec, u8 query_bit);
 
 
+/* --------------------------------------------------------------------------
+				Time and Alarm Device
+   -------------------------------------------------------------------------- */
+int acpi_tad_parse(void);
+int acpi_tad_init(void);
+
 /*--------------------------------------------------------------------------
                                   Suspend/Resume
   -------------------------------------------------------------------------- */

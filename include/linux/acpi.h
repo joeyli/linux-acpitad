@@ -28,6 +28,7 @@
 #include <linux/errno.h>
 #include <linux/ioport.h>	/* for struct resource */
 #include <linux/device.h>
+#include <linux/rtc.h>
 
 #ifdef	CONFIG_ACPI
 
@@ -179,6 +180,43 @@ extern int ec_transaction(u8 command,
                           const u8 *wdata, unsigned wdata_len,
                           u8 *rdata, unsigned rdata_len);
 extern acpi_handle ec_get_handle(void);
+
+/*
+ * Time and Alarm device capability flags
+ */
+
+#define TAD_CAP_ACWAKE          (1<<0)
+#define TAD_CAP_DCWAKE          (1<<1)
+#define TAD_CAP_GETSETTIME      (1<<2)
+#define TAD_CAP_ACCURACY        (1<<3)
+
+#define ACPI_TIME_AFFECTED_BY_DAYLIGHT  (1<<0)
+#define ACPI_TIME_ADJUSTED_FOR_DAYLIGHT (1<<1)
+#define ACPI_ISDST (ACPI_TIME_AFFECTED_BY_DAYLIGHT|ACPI_TIME_ADJUSTED_FOR_DAYLIGHT)
+#define ACPI_UNSPECIFIED_TIMEZONE       2047
+
+struct acpi_time {
+	u16 year;
+	u8 month;
+	u8 day;
+	u8 hour;
+	u8 minute;
+	u8 second;
+	u8 pad1;
+	u16 milliseconds;
+	s16 timezone;
+	u8 daylight;
+	u8 pad2[3];
+};
+
+extern void convert_to_acpi_time(struct rtc_time *tm, struct acpi_time *acpit);
+extern void convert_from_acpi_time(struct acpi_time *acpit, struct rtc_time *tm);
+extern int acpi_read_time(struct acpi_time *acpit);
+extern int acpi_set_time(struct acpi_time *acpit);
+extern int acpi_get_rtc_time(struct rtc_time *tm);
+extern int acpi_set_rtc_time(struct rtc_time *tm);
+extern int acpi_tad_get_capability(unsigned long *output);
+extern void __init acpi_tad_warp_clock(void);
 
 #if defined(CONFIG_ACPI_WMI) || defined(CONFIG_ACPI_WMI_MODULE)
 

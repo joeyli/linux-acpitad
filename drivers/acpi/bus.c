@@ -510,6 +510,8 @@ void __init acpi_early_init(void)
 		goto error0;
 	}
 
+	acpi_tad_parse();
+
 	/*
 	 * If the system is using ACPI then we can be reasonably
 	 * confident that any regulators are managed by the firmware
@@ -641,6 +643,7 @@ static int __init acpi_init(void)
 	pci_mmcfg_late_init();
 	acpi_scan_init();
 	acpi_ec_init();
+	acpi_tad_init();
 	acpi_debugfs_init();
 	acpi_sleep_proc_init();
 	acpi_wakeup_device_init();
