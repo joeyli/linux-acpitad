@@ -156,6 +156,12 @@ static inline int suspend_nvs_save(void) { return 0; }
 static inline void suspend_nvs_restore(void) {}
 #endif
 
+/* --------------------------------------------------------------------------
+				Time and Alarm Device
+   -------------------------------------------------------------------------- */
+int acpi_tad_parse(void);
+int acpi_tad_init(void);
+
 /*--------------------------------------------------------------------------
 				Platform bus support
   -------------------------------------------------------------------------- */
