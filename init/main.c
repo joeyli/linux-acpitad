@@ -570,6 +570,11 @@ asmlinkage void __init start_kernel(void)
 	hrtimers_init();
 	softirq_init();
 	timekeeping_init();
+#ifdef CONFIG_X86_64
+	/* adjust system time by timezone */
+	if (efi_enabled(EFI_RUNTIME_SERVICES))
+		efi_warp_clock();
+#endif
 	time_init();
 	sched_clock_postinit();
 	perf_event_init();

@@ -176,7 +176,7 @@ int do_sys_settimeofday(const struct timespec *tv, const struct timezone *tz)
 		update_vsyscall_tz();
 		if (firsttime) {
 			firsttime = 0;
-			if (!tv)
+			if (!tv && !persistent_clock_is_local)
 				warp_clock();
 		}
 	}

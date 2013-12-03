@@ -306,6 +306,43 @@ static void efi_get_time(struct timespec *now)
 	now->tv_nsec = 0;
 }
 
+static int efi_read_timezone(s16 *timezone)
+{
+	efi_status_t status;
+	efi_time_t eft;
+	efi_time_cap_t cap;
+
+	status = efi.get_time(&eft, &cap);
+
+	if (status != EFI_SUCCESS) {
+		/* should never happen */
+		pr_err("efitime: can't read timezone.\n");
+		return -EINVAL;
+	}
+
+	*timezone = (s16)le16_to_cpu(eft.timezone);
+	return 0;
+}
+
+void __init efi_warp_clock(void)
+{
+	s16 timezone;
+
+	if (!efi_read_timezone(&timezone)) {
+		/* TimeZone value, 2047 or 0 means UTC */
+		if (timezone != 0 && timezone != 2047) {
+			struct timespec adjust;
+
+			persistent_clock_is_local = 1;
+			adjust.tv_sec = timezone * 60;
+			adjust.tv_nsec = 0;
+			timekeeping_inject_offset(&adjust);
+			pr_info("RTC timezone is %d mins behind of UTC.\n", timezone);
+			pr_info("Adjusted system time to UTC.\n");
+		}
+	}
+}
+
 /*
  * Tell the kernel about the EFI memory map.  This might include
  * more than the max 128 entries that can fit in the e820 legacy
