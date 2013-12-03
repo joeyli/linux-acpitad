@@ -122,6 +122,12 @@ rtc_sysfs_show_hctosys(struct device *dev, struct device_attribute *attr,
 		return sprintf(buf, "0\n");
 }
 
+static ssize_t
+rtc_sysfs_show_caps(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", to_rtc_device(dev)->caps);
+}
+
 static struct device_attribute rtc_attrs[] = {
 	__ATTR(name, S_IRUGO, rtc_sysfs_show_name, NULL),
 	__ATTR(date, S_IRUGO, rtc_sysfs_show_date, NULL),
@@ -130,6 +136,7 @@ static struct device_attribute rtc_attrs[] = {
 	__ATTR(max_user_freq, S_IRUGO | S_IWUSR, rtc_sysfs_show_max_user_freq,
 			rtc_sysfs_set_max_user_freq),
 	__ATTR(hctosys, S_IRUGO, rtc_sysfs_show_hctosys, NULL),
+	__ATTR(caps, S_IRUGO, rtc_sysfs_show_caps, NULL),
 	{ },
 };
 

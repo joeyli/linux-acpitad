@@ -850,6 +850,16 @@ config RTC_DRV_NUC900
 	  If you say yes here you get support for the RTC subsystem of the
 	  NUC910/NUC920 used in embedded systems.
 
+config RTC_ACPI_TAD
+	tristate "RTC ACPI Time and Alarm Device driver"
+	help
+	  This driver exposes ACPI 5.0 Time and Alarm Device as RTC device.
+	  Say Y (or M) if you have a computer with ACPI 5.0 firmware that
+	  implemented Time and Alarm Device.
+
+	  To compile this driver as a module, choose M here:
+	  the module will be called rtc_acpitad.
+
 comment "on-CPU RTC drivers"
 
 config RTC_DRV_DAVINCI
