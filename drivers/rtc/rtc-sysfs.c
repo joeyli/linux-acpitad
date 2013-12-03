@@ -122,6 +122,13 @@ hctosys_show(struct device *dev, struct device_attribute *attr, char *buf)
 }
 static DEVICE_ATTR_RO(hctosys);
 
+static ssize_t
+caps_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+       return sprintf(buf, "%d\n", to_rtc_device(dev)->caps);
+}
+static DEVICE_ATTR_RO(caps);
+
 static struct attribute *rtc_attrs[] = {
 	&dev_attr_name.attr,
 	&dev_attr_date.attr,
@@ -129,6 +136,7 @@ static struct attribute *rtc_attrs[] = {
 	&dev_attr_since_epoch.attr,
 	&dev_attr_max_user_freq.attr,
 	&dev_attr_hctosys.attr,
+	&dev_attr_caps.attr,
 	NULL,
 };
 ATTRIBUTE_GROUPS(rtc);

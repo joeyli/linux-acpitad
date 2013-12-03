@@ -398,6 +398,10 @@ static long rtc_dev_ioctl(struct file *file,
 			err = -EFAULT;
 		return err;
 
+	case RTC_CAPS_READ:
+		err = put_user(rtc->caps, (unsigned int __user *)uarg);
+		break;
+
 	default:
 		/* Finally try the driver's ioctl interface */
 		if (ops->ioctl) {
