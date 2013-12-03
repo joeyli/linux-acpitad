@@ -293,6 +293,8 @@ static int efi_rtc_probe(struct platform_device *dev)
 
 	rtc->caps = (RTC_TZ_CAP | RTC_DST_CAP);
 
+	rtc->uie_unsupported = 1;
+
 	platform_set_drvdata(dev, rtc);
 
 	return 0;
