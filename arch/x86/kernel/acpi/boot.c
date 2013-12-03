@@ -83,6 +83,8 @@ static u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
 #warning ACPI uses CMPXCHG, i486 and later hardware
 #endif
 
+static bool acpi_no_cmos_rtc;
+
 /* --------------------------------------------------------------------------
                               Boot-time Configuration
    -------------------------------------------------------------------------- */
@@ -1531,6 +1533,13 @@ int __init acpi_boot_init(void)
 	 */
 	acpi_table_parse(ACPI_SIG_FADT, acpi_parse_fadt);
 
+	/* Dummy NO_CMOS_RTC enable option to fake out RTC CMOS */
+	if (acpi_no_cmos_rtc) {
+		acpi_gbl_FADT.header.revision = 5;
+		acpi_gbl_FADT.boot_flags |= ACPI_FADT_NO_CMOS_RTC;
+		pr_info("acpi: Set NO_CMOS_RTC bit in FADT for testing\n");
+	}
+
 	/*
 	 * Process the Multiple APIC Description Table (MADT), if present
 	 */
@@ -1673,3 +1682,11 @@ void __init arch_reserve_mem_area(acpi_physical_address addr, size_t size)
 	e820_add_region(addr, size, E820_ACPI);
 	update_e820();
 }
+
+/* Dummy NO_CMOS_RTC enable option to fake out RTC CMOS */
+static int __init setup_acpi_no_cmos_rtc(char *arg)
+{
+	acpi_no_cmos_rtc = true;
+	return 0;
+}
+early_param("acpi_no_cmos_rtc", setup_acpi_no_cmos_rtc);
