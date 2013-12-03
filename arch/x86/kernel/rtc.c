@@ -174,15 +174,26 @@ static __init int add_rtc_cmos(void)
 	    { "PNP0b00", "PNP0b01", "PNP0b02", };
 	struct pnp_dev *dev;
 	struct pnp_id *id;
-	int i;
+	int i = 0;
+	bool found_pnp;
 
 	pnp_for_each_dev(dev) {
 		for (id = dev->id; id; id = id->next) {
 			for (i = 0; i < ARRAY_SIZE(ids); i++) {
-				if (compare_pnp_id(id, ids[i]) != 0)
-					return 0;
+				if (compare_pnp_id(id, ids[i]) != 0) {
+					found_pnp = true;
+					goto found_pnp;
+				}
 			}
 		}
+	}
+
+found_pnp:
+	if (found_pnp) {
+		if (acpi_gbl_FADT.header.revision >= 5 &&
+		    acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC)
+			pr_err(FW_BUG "Found %s device but CMOS RTC Not Present flag set\n", ids[i]);
+		return 0;
 	}
 #endif
 	if (of_have_populated_dt())
@@ -193,7 +204,8 @@ static __init int add_rtc_cmos(void)
 		return -ENODEV;
 
 #ifdef CONFIG_ACPI
-	if (acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
+	if (acpi_gbl_FADT.header.revision >= 5 &&
+	    acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
 		/* This warning can likely go away again in a year or two. */
 		pr_info("ACPI: not registering RTC platform device\n");
 		return -ENODEV;

@@ -28,6 +28,9 @@
  * interrupts disabled, holding the global rtc_lock, to exclude those
  * other drivers and utilities on correctly configured systems.
  */
+
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -1143,6 +1146,12 @@ static bool platform_driver_registered;
 static int __init cmos_init(void)
 {
 	int retval = 0;
+
+	if (acpi_gbl_FADT.header.revision >= 5 &&
+	    acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
+		pr_info("ACPI CMOS RTC Not Present detected - not loading\n");
+		return 0;
+	}
 
 #ifdef	CONFIG_PNP
 	retval = pnp_register_driver(&cmos_pnp_driver);
