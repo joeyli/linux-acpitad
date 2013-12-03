@@ -116,6 +116,11 @@ struct rtc_device
 	/* Some hardware can't support UIE mode */
 	int uie_unsupported;
 
+	/* Time Zone and Daylight capabilities */
+#define        RTC_TZ_CAP      (1 << 0)
+#define        RTC_DST_CAP     (1 << 1)
+	int caps;
+
 #ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
 	struct work_struct uie_task;
 	struct timer_list uie_timer;
