@@ -22,95 +22,6 @@
 #include <linux/rtc.h>
 #include <linux/efi.h>
 
-#define EFI_ISDST (EFI_TIME_ADJUST_DAYLIGHT|EFI_TIME_IN_DAYLIGHT)
-/*
- * EFI Epoch is 1/1/1998
- */
-#define EFI_RTC_EPOCH		1998
-
-/*
- * returns day of the year [0-365]
- */
-static inline int
-compute_yday(efi_time_t *eft)
-{
-	/* efi_time_t.month is in the [1-12] so, we need -1 */
-	return rtc_year_days(eft->day, eft->month - 1, eft->year);
-}
-/*
- * returns day of the week [0-6] 0=Sunday
- *
- * Don't try to provide a year that's before 1998, please !
- */
-static int
-compute_wday(efi_time_t *eft)
-{
-	int y;
-	int ndays = 0;
-
-	if (eft->year < 1998) {
-		pr_err("EFI year < 1998, invalid date\n");
-		return -1;
-	}
-
-	for (y = EFI_RTC_EPOCH; y < eft->year; y++)
-		ndays += 365 + (is_leap_year(y) ? 1 : 0);
-
-	ndays += compute_yday(eft);
-
-	/*
-	 * 4=1/1/1998 was a Thursday
-	 */
-	return (ndays + 4) % 7;
-}
-
-static void
-convert_to_efi_time(struct rtc_time *wtime, efi_time_t *eft)
-{
-	eft->year	= wtime->tm_year + 1900;
-	eft->month	= wtime->tm_mon + 1;
-	eft->day	= wtime->tm_mday;
-	eft->hour	= wtime->tm_hour;
-	eft->minute	= wtime->tm_min;
-	eft->second	= wtime->tm_sec;
-	eft->nanosecond = 0;
-	eft->daylight	= wtime->tm_isdst ? EFI_ISDST : 0;
-#ifdef CONFIG_IA64
-	/* avoid overwrite timezone on non-IA64 platform. e.g. x86_64 */
-	eft->timezone	= EFI_UNSPECIFIED_TIMEZONE;
-#endif
-}
-
-static void
-convert_from_efi_time(efi_time_t *eft, struct rtc_time *wtime)
-{
-	memset(wtime, 0, sizeof(*wtime));
-	wtime->tm_sec  = eft->second;
-	wtime->tm_min  = eft->minute;
-	wtime->tm_hour = eft->hour;
-	wtime->tm_mday = eft->day;
-	wtime->tm_mon  = eft->month - 1;
-	wtime->tm_year = eft->year - 1900;
-
-	/* day of the week [0-6], Sunday=0 */
-	wtime->tm_wday = compute_wday(eft);
-
-	/* day in the year [1-365]*/
-	wtime->tm_yday = compute_yday(eft);
-
-
-	switch (eft->daylight & EFI_ISDST) {
-	case EFI_ISDST:
-		wtime->tm_isdst = 1;
-		break;
-	case EFI_TIME_ADJUST_DAYLIGHT:
-		wtime->tm_isdst = 0;
-		break;
-	default:
-		wtime->tm_isdst = -1;
-	}
-}
-
 static int efi_read_gmtoff(struct device *dev, long int *arg)
 {
 	efi_status_t status;
@@ -230,54 +141,22 @@ static int efi_set_alarm(struct device *dev, struct rtc_wkalrm *wkalrm)
 	return status == EFI_SUCCESS ? 0 : -EINVAL;
 }
 
-static int efi_read_time(struct device *dev, struct rtc_time *tm)
+static int efi_rtc_read_time(struct device *dev, struct rtc_time *tm)
 {
-	efi_status_t status;
-	efi_time_t eft;
-	efi_time_cap_t cap;
-
-	status = efi.get_time(&eft, &cap);
-
-	if (status != EFI_SUCCESS) {
-		/* should never happen */
-		dev_err(dev, "can't read time\n");
-		return -EINVAL;
-	}
-
-	convert_from_efi_time(&eft, tm);
-
-	return rtc_valid_tm(tm);
+	return efi_read_time(tm);
 }
 
-static int efi_set_time(struct device *dev, struct rtc_time *tm)
+static int efi_rtc_set_time(struct device *dev, struct rtc_time *tm)
 {
-	efi_status_t status;
-	efi_time_t eft;
-#ifdef CONFIG_X86
-	efi_time_cap_t cap;
-
-	/* read time for grab timezone to avoid overwrite it */
-	status = efi.get_time(&eft, &cap);
-
-	if (status != EFI_SUCCESS) {
-		pr_err("efitime: can't read time\n");
-		return -EINVAL;
-	}
-#endif
-
-	convert_to_efi_time(tm, &eft);
-
-	status = efi.set_time(&eft);
-
-	return status == EFI_SUCCESS ? 0 : -EINVAL;
+	return efi_set_time(tm);
 }
 
 static const struct rtc_class_ops efi_rtc_ops = {
 #ifdef CONFIG_X86
 	.ioctl = efi_rtc_ioctl,
 #endif
-	.read_time = efi_read_time,
-	.set_time = efi_set_time,
+	.read_time = efi_rtc_read_time,
+	.set_time = efi_rtc_set_time,
 	.read_alarm = efi_read_alarm,
 	.set_alarm = efi_set_alarm,
 };

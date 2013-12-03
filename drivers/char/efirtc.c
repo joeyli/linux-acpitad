@@ -41,108 +41,10 @@
 
 #define EFI_RTC_VERSION		"0.4"
 
-#define EFI_ISDST (EFI_TIME_ADJUST_DAYLIGHT|EFI_TIME_IN_DAYLIGHT)
-/*
- * EFI Epoch is 1/1/1998
- */
-#define EFI_RTC_EPOCH		1998
-
 static DEFINE_SPINLOCK(efi_rtc_lock);
 
 static long efi_rtc_ioctl(struct file *file, unsigned int cmd,
 							unsigned long arg);
-
-#define is_leap(year) \
-          ((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
-
-static const unsigned short int __mon_yday[2][13] =
-{
-	/* Normal years.  */
-	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
-	/* Leap years.  */  
-	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
-};
-
-/*
- * returns day of the year [0-365]
- */
-static inline int
-compute_yday(efi_time_t *eft)
-{
-	/* efi_time_t.month is in the [1-12] so, we need -1 */
-	return  __mon_yday[is_leap(eft->year)][eft->month-1]+ eft->day -1;
-}
-/*
- * returns day of the week [0-6] 0=Sunday
- *
- * Don't try to provide a year that's before 1998, please !
- */
-static int
-compute_wday(efi_time_t *eft)
-{
-	int y;
-	int ndays = 0;
-
-	if ( eft->year < 1998 ) {
-		printk(KERN_ERR "efirtc: EFI year < 1998, invalid date\n");
-		return -1;
-	}
-
-	for(y=EFI_RTC_EPOCH; y < eft->year; y++ ) {
-		ndays += 365 + (is_leap(y) ? 1 : 0);
-	}
-	ndays += compute_yday(eft);
-
-	/*
-	 * 4=1/1/1998 was a Thursday
-	 */
-	return (ndays + 4) % 7;
-}
-
-static void
-convert_to_efi_time(struct rtc_time *wtime, efi_time_t *eft)
-{
-
-	eft->year	= wtime->tm_year + 1900;
-	eft->month	= wtime->tm_mon + 1; 
-	eft->day	= wtime->tm_mday;
-	eft->hour	= wtime->tm_hour;
-	eft->minute	= wtime->tm_min;
-	eft->second 	= wtime->tm_sec;
-	eft->nanosecond = 0; 
-	eft->daylight	= wtime->tm_isdst ? EFI_ISDST: 0;
-	eft->timezone	= EFI_UNSPECIFIED_TIMEZONE;
-}
-
-static void
-convert_from_efi_time(efi_time_t *eft, struct rtc_time *wtime)
-{
-	memset(wtime, 0, sizeof(*wtime));
-	wtime->tm_sec  = eft->second;
-	wtime->tm_min  = eft->minute;
-	wtime->tm_hour = eft->hour;
-	wtime->tm_mday = eft->day;
-	wtime->tm_mon  = eft->month - 1;
-	wtime->tm_year = eft->year - 1900;
-
-	/* day of the week [0-6], Sunday=0 */
-	wtime->tm_wday = compute_wday(eft);
-
-	/* day in the year [1-365]*/
-	wtime->tm_yday = compute_yday(eft);
-
-
-	switch (eft->daylight & EFI_ISDST) {
-		case EFI_ISDST:
-			wtime->tm_isdst = 1;
-			break;
-		case EFI_TIME_ADJUST_DAYLIGHT:
-			wtime->tm_isdst = 0;
-			break;
-		default:
-			wtime->tm_isdst = -1;
-	}
-}
 
 static long efi_rtc_ioctl(struct file *file, unsigned int cmd,
 							unsigned long arg)
