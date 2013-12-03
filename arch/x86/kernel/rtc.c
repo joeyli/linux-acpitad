@@ -117,6 +117,10 @@ unsigned char rtc_cmos_read(unsigned char addr)
 {
 	unsigned char val;
 
+	BUG_ON(acpi_gbl_FADT.header.revision >= 5 &&
+	       acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC &&
+	       addr <= RTC_YEAR);
+
 	lock_cmos_prefix(addr);
 	outb(addr, RTC_PORT(0));
 	val = inb(RTC_PORT(1));
@@ -128,6 +132,10 @@ EXPORT_SYMBOL(rtc_cmos_read);
 
 void rtc_cmos_write(unsigned char val, unsigned char addr)
 {
+	BUG_ON(acpi_gbl_FADT.header.revision >= 5 &&
+	       acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC &&
+	       addr <= RTC_YEAR);
+
 	lock_cmos_prefix(addr);
 	outb(addr, RTC_PORT(0));
 	outb(val, RTC_PORT(1));

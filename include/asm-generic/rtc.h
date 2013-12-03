@@ -16,6 +16,8 @@
 #include <linux/rtc.h>
 #include <linux/bcd.h>
 #include <linux/delay.h>
+#include <linux/efi.h>
+#include <linux/acpi.h>
 
 #define RTC_PIE 0x40		/* periodic interrupt enable */
 #define RTC_AIE 0x20		/* alarm interrupt enable */
@@ -50,6 +52,16 @@ static inline unsigned int __get_rtc_time(struct rtc_time *time)
 #ifdef CONFIG_MACH_DECSTATION
 	unsigned int real_year;
 #endif
+
+	if (acpi_gbl_FADT.header.revision >= 5 &&
+	    acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
+#if defined(CONFIG_EFI) && defined(CONFIG_X86_64)
+		printk_once(KERN_INFO "efi: get rtc time by EFI\n");
+		return efi_read_time(time);
+#else
+		BUG();
+#endif
+	}
 
 	/*
 	 * read RTC once any update in progress is done. The update
@@ -122,6 +134,16 @@ static inline int __set_rtc_time(struct rtc_time *time)
 #ifdef CONFIG_MACH_DECSTATION
 	unsigned int real_yrs, leap_yr;
 #endif
+
+	if (acpi_gbl_FADT.header.revision >= 5 &&
+	    acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
+#if defined(CONFIG_EFI) && defined(CONFIG_X86_64)
+		printk_once(KERN_INFO "efi: set rtc time by EFI\n");
+		return efi_set_time(time);
+#else
+		BUG();
+#endif
+	}
 
 	yrs = time->tm_year;
 	mon = time->tm_mon + 1;   /* tm_mon starts at zero */
