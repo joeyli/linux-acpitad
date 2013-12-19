@@ -177,23 +177,12 @@ compute_yday(efi_time_t *eft)
 static inline int
 compute_wday(efi_time_t *eft)
 {
-	int y;
-	int ndays = 0;
-
 	if (eft->year < 1998) {
 		pr_err("EFI year < 1998, invalid date\n");
 		return -1;
 	}
 
-	for (y = EFI_RTC_EPOCH; y < eft->year; y++)
-		ndays += 365 + (is_leap_year(y) ? 1 : 0);
-
-	ndays += compute_yday(eft);
-
-	/*
-	 * 4=1/1/1998 was a Thursday
-	 */
-	return (ndays + 4) % 7;
+	return rtc_wday(eft->day, eft->month - 1, eft->year);
 }
 
 static inline void

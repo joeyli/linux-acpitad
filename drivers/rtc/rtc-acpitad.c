@@ -32,23 +32,12 @@ compute_yday(struct acpi_time *acpit)
 static int
 compute_wday(struct acpi_time *acpit)
 {
-	int y;
-	int ndays = 0;
-
 	if (acpit->year < 1900) {
 		pr_err("ACPI year < 1900, invalid date\n");
 		return -1;
 	}
 
-	for (y = 1900; y < acpit->year; y++)
-		ndays += 365 + (is_leap_year(y) ? 1 : 0);
-
-	ndays += compute_yday(acpit);
-
-	/*
-	 * 1=1/1/1900 was a Monday
-	 */
-	return (ndays + 1) % 7;
+	return rtc_wday(acpit->day, acpit->month - 1, acpit->year);
 }
 
 static void
