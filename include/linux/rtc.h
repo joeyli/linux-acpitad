@@ -191,6 +191,44 @@ static inline bool is_leap_year(unsigned int year)
 	return (!(year % 4) && (year % 100)) || !(year % 400);
 }
 
+#define SINCE1900 25    /* valid from 2000 */
+
+static inline int rtc_wday(unsigned int day, unsigned int month, unsigned int year)
+{
+	int ndays, correction;
+	int base;
+
+	if (year < 1900) {
+		pr_err("rtc: year < 1900, invalid date\n");
+		return -1;
+	}
+
+	if (year >= 2000)
+		base = year - 2000;
+	else
+		base = year - 1900;
+
+	correction = 0;
+	if (base >= 0) {
+		correction += base / 4;
+		correction -= base / 100;
+		correction += base / 400;
+		if (year >= 2000)
+			correction += SINCE1900;
+
+		/* later rtc_year_days will add the leap day of current year */
+		correction -= ((is_leap_year(year)) ? 1 : 0);
+	}
+
+	ndays = (year - 1900) * 365 + correction;
+	ndays += rtc_year_days(day, month, year);
+
+	/*
+	 * 1=1/1/1900 was a Monday
+	 */
+	return (ndays + 1) % 7;
+}
+
 #ifdef CONFIG_RTC_HCTOSYS_DEVICE
 extern int rtc_hctosys_ret;
 #else
