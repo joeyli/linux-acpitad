@@ -87,7 +87,6 @@ static const struct acpi_port_info acpi_protected_ports[] = {
 	{"PIC0", 0x0020, 0x0021, ACPI_ALWAYS_ILLEGAL},
 	{"PIT1", 0x0040, 0x0043, ACPI_OSI_WIN_XP},
 	{"PIT2", 0x0048, 0x004B, ACPI_OSI_WIN_XP},
-	{"RTC", 0x0070, 0x0071, ACPI_OSI_WIN_XP},
 	{"CMOS", 0x0074, 0x0076, ACPI_OSI_WIN_XP},
 	{"DMA1", 0x0081, 0x0083, ACPI_OSI_WIN_XP},
 	{"DMA1L", 0x0087, 0x0087, ACPI_OSI_WIN_XP},
