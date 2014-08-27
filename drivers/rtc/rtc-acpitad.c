@@ -77,6 +77,109 @@ error_read:
 	return ret;
 }
 
+static int convert_to_acpi_time(struct rtc_time2 *tm2, struct acpi_time *acpit)
+{
+	s16 timezone;
+	struct rtc_time *tm = &tm2->tm;
+
+	if (tm2->writemask & RTC_TIME2_TIME) {
+		acpit->year         = tm->tm_year + 1900;
+		acpit->month        = tm->tm_mon + 1;
+		acpit->day          = tm->tm_mday;
+		acpit->hour         = tm->tm_hour;
+		acpit->minute       = tm->tm_min;
+		acpit->second       = tm->tm_sec;
+		acpit->milliseconds = 0;
+	}
+
+	if (tm2->writemask & RTC_TIME2_DAYLIGHT)
+		acpit->daylight = tm2->tm_daylight;
+
+	if (tm2->writemask & RTC_TIME2_GMTOFF) {
+		/* transfer seconds east of UTC to minutes for ACPI */
+		timezone = tm2->tm_gmtoff / 60 * -1;
+		if (abs(timezone) > 1440 &&
+		    abs(timezone) != ACPI_UNSPECIFIED_TIMEZONE)
+			return -EINVAL;
+
+		/* can not use -2047 */
+		if (timezone == ACPI_UNSPECIFIED_TIMEZONE * -1)
+			timezone = ACPI_UNSPECIFIED_TIMEZONE;
+
+		acpit->timezone = (s16)cpu_to_le16(timezone);
+	}
+
+	return 0;
+}
+
+static void convert_from_acpi_time(struct acpi_time *acpit, struct rtc_time2 *tm2)
+{
+	struct rtc_time *tm = &tm2->tm;
+	s16 timezone;
+
+	tm->tm_sec      = acpit->second;
+	tm->tm_min      = acpit->minute;
+	tm->tm_hour     = acpit->hour;
+	tm->tm_mday     = acpit->day;
+	tm->tm_mon      = acpit->month - 1;
+	tm->tm_year     = acpit->year - 1900;
+
+	tm2->tm_daylight = acpit->daylight;
+
+	/* transfer minutes to seconds east of UTC for userspace */
+	timezone = (s16)le16_to_cpu(acpit->timezone);
+	tm2->tm_gmtoff = ACPI_UNSPECIFIED_TIMEZONE * 60;
+	if (abs(timezone) != ACPI_UNSPECIFIED_TIMEZONE &&
+	    abs(timezone) <= 1440)
+		tm2->tm_gmtoff = timezone * 60 * -1;
+}
+
+static int acpitad_read_time2(struct device *dev, struct rtc_time2 *tm2)
+{
+	struct acpi_time *acpit;
+	int ret;
+
+	acpit = kzalloc(sizeof(struct acpi_time), GFP_KERNEL);
+	if (!acpit)
+		return -ENOMEM;
+
+	ret = acpi_read_time(acpit);
+	if (ret)
+		goto error_read;
+
+	convert_from_acpi_time(acpit, tm2);
+
+error_read:
+	kfree(acpit);
+
+	return rtc_valid_tm(&tm2->tm);
+}
+
+static int acpitad_set_time2(struct device *dev, struct rtc_time2 *tm2)
+{
+	struct acpi_time *acpit;
+	int ret;
+
+	acpit = kzalloc(sizeof(struct acpi_time), GFP_KERNEL);
+	if (!acpit)
+		return -ENOMEM;
+
+	ret = acpi_read_time(acpit);
+	if (ret)
+		goto error_free;
+
+	ret = convert_to_acpi_time(tm2, acpit);
+	if (ret)
+		goto error_free;
+
+	ret = acpi_set_time(acpit);
+
+error_free:
+	kfree(acpit);
+
+	return ret;
+}
+
 static int acpitad_rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
 {
 	long int gmtoff;
@@ -111,6 +214,8 @@ static struct rtc_class_ops acpi_rtc_ops = {
 	.ioctl          = acpitad_rtc_ioctl,
 	.read_time      = acpitad_read_time,
 	.set_time       = acpitad_set_time,
+	.read_time2	= acpitad_read_time2,
+	.set_time2	= acpitad_set_time2,
 };
 
 static int acpitad_rtc_probe(struct platform_device *dev)
