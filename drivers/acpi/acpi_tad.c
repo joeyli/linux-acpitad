@@ -263,6 +263,7 @@ static struct acpi_driver acpi_time_alarm_driver = {
 		},
 };
 
+#if 0
 static void acpi_get_time(struct timespec *now)
 {
 	struct acpi_time *acpit;
@@ -324,12 +325,12 @@ static int acpi_set_rtc_mmss(const struct timespec *now)
 
 	return 0;
 }
+#endif
 
 static __init acpi_status
 acpitad_parse_device(acpi_handle handle, u32 Level, void *context, void **retval)
 {
 	acpi_status status;
-	acpi_handle *acpih = context;
 
 	/* evaluate _GCP */
 	status = acpi_evaluate_integer(handle, "_GCP", NULL, &cap);
@@ -338,16 +339,7 @@ acpitad_parse_device(acpi_handle handle, u32 Level, void *context, void **retval
 		return -ENODEV;
 	}
 
-	*acpih = handle;
-
-	/* setup wallclock accessing functions */
-	if (cap & TAD_CAP_GETSETTIME) {
-		x86_platform.get_wallclock = acpi_get_time;
-		x86_platform.set_wallclock = acpi_set_rtc_mmss;
-	} else if (acpi_gbl_FADT.header.revision >= 5 &&
-		acpi_gbl_FADT.boot_flags & ACPI_FADT_NO_CMOS_RTC) {
-		pr_warn(FW_INFO "Get/Set real time features not available.\n");
-	}
+	*(acpi_handle *) context = handle;
 
 	return status;
 }
