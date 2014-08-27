@@ -109,4 +109,18 @@ struct rtc_pll_info {
 #define RTC_MAX_FREQ	8192
 
 
+struct rtc_time2 {
+	int writemask;          /* define which value will be write */
+	struct rtc_time tm;     /* rtc_time items */
+	int tm_daylight;        /* Bit0: 1 = the time is affected by daylight savings time */
+				/* Bit1: 1 = the time has been adjusted for daylight savings time */
+	long int tm_gmtoff;     /* Seconds east of UTC. */
+};
+
+/* define for rtc_time2 write mask */
+#define RTC_TIME2_TIME         (1 << 0)
+#define RTC_TIME2_DAYLIGHT     (1 << 1)
+#define RTC_TIME2_GMTOFF       (1 << 2)
+
+
 #endif /* _UAPI_LINUX_RTC_H_ */
