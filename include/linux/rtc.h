@@ -57,6 +57,8 @@ struct rtc_class_ops {
 	int (*ioctl)(struct device *, unsigned int, unsigned long);
 	int (*read_time)(struct device *, struct rtc_time *);
 	int (*set_time)(struct device *, struct rtc_time *);
+	int (*read_time2)(struct device *, struct rtc_time2 *);
+	int (*set_time2)(struct device *, struct rtc_time2 *);
 	int (*read_alarm)(struct device *, struct rtc_wkalrm *);
 	int (*set_alarm)(struct device *, struct rtc_wkalrm *);
 	int (*proc)(struct device *, struct seq_file *);
@@ -148,6 +150,8 @@ extern void devm_rtc_device_unregister(struct device *dev,
 
 extern int rtc_read_time(struct rtc_device *rtc, struct rtc_time *tm);
 extern int rtc_set_time(struct rtc_device *rtc, struct rtc_time *tm);
+extern int rtc_read_time2(struct rtc_device *rtc, struct rtc_time2 *tm);
+extern int rtc_set_time2(struct rtc_device *rtc, struct rtc_time2 *tm);
 extern int rtc_set_mmss(struct rtc_device *rtc, unsigned long secs);
 extern int rtc_set_ntp_time(struct timespec now);
 int __rtc_read_alarm(struct rtc_device *rtc, struct rtc_wkalrm *alarm);

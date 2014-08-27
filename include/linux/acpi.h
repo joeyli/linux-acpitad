@@ -188,8 +188,6 @@ struct acpi_time {
 	u8 pad2[3];
 };
 
-extern void convert_to_acpi_time(struct rtc_time *tm, struct acpi_time *acpit);
-extern void convert_from_acpi_time(struct acpi_time *acpit, struct rtc_time *tm);
 extern int acpi_read_time(struct acpi_time *acpit);
 extern int acpi_set_time(struct acpi_time *acpit);
 extern int acpi_get_rtc_time(struct rtc_time *tm);

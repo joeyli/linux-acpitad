@@ -122,5 +122,8 @@ struct rtc_time2 {
 #define RTC_TIME2_DAYLIGHT     (1 << 1)
 #define RTC_TIME2_GMTOFF       (1 << 2)
 
+#define RTC_RD_TIME2   _IOR('p', 0x15, struct rtc_time2)       /* Read RTC time 2      */
+#define RTC_SET_TIME2  _IOW('p', 0x16, struct rtc_time2)       /* Set RTC time 2       */
+
 
 #endif /* _UAPI_LINUX_RTC_H_ */

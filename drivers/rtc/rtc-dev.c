@@ -222,6 +222,7 @@ static long rtc_dev_ioctl(struct file *file,
 	struct rtc_device *rtc = file->private_data;
 	const struct rtc_class_ops *ops = rtc->ops;
 	struct rtc_time tm;
+	struct rtc_time2 tm2;
 	struct rtc_wkalrm alarm;
 	void __user *uarg = (void __user *) arg;
 
@@ -236,6 +237,7 @@ static long rtc_dev_ioctl(struct file *file,
 	switch (cmd) {
 	case RTC_EPOCH_SET:
 	case RTC_SET_TIME:
+	case RTC_SET_TIME2:
 		if (!capable(CAP_SYS_TIME))
 			err = -EACCES;
 		break;
@@ -348,6 +350,25 @@ static long rtc_dev_ioctl(struct file *file,
 			return -EFAULT;
 
 		return rtc_set_time(rtc, &tm);
+
+	case RTC_RD_TIME2:
+		mutex_unlock(&rtc->ops_lock);
+
+		err = rtc_read_time2(rtc, &tm2);
+		if (err < 0)
+			return err;
+
+		if (copy_to_user(uarg, &tm2, sizeof(tm2)))
+			err = -EFAULT;
+		return err;
+
+	case RTC_SET_TIME2:
+		mutex_unlock(&rtc->ops_lock);
+
+		if (copy_from_user(&tm2, uarg, sizeof(tm2)))
+			return -EFAULT;
+
+		return rtc_set_time2(rtc, &tm2);
 
 	case RTC_PIE_ON:
 		err = rtc_irq_set_state(rtc, NULL, 1);
