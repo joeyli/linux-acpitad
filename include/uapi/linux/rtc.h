@@ -94,10 +94,10 @@ struct rtc_pll_info {
 #define RTC_VL_READ	_IOR('p', 0x13, int)	/* Voltage low detector */
 #define RTC_VL_CLR	_IO('p', 0x14)		/* Clear voltage low information */
 
-#define RTC_RD_GMTOFF  _IOR('p', 0x15, long int)       /* Read time zone return seconds east of UTC */
-#define RTC_SET_GMTOFF _IOW('p', 0x16, long int)       /* Set time zone input seconds east of UTC */
+#define RTC_RD_GMTOFF  _IOR('p', 0x17, long int)       /* Read time zone return seconds east of UTC */
+#define RTC_SET_GMTOFF _IOW('p', 0x18, long int)       /* Set time zone input seconds east of UTC */
 
-#define RTC_CAPS_READ  _IOR('p', 0x17, unsigned int)   /* Get capabilities, e.g. TZ, DST */
+#define RTC_CAPS_READ  _IOR('p', 0x19, unsigned int)   /* Get capabilities, e.g. TZ, DST */
 
 /* interrupt flags */
 #define RTC_IRQF 0x80	/* Any of the following is active */
