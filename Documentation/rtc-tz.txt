@@ -74,6 +74,31 @@ When ACPI or EFI value is:
 The above data tranfer work of Timezone and Daylight will handled by RTC driver
 to ACPI TAD and EFI TIME: rtc-acpitad and rtc-efi.
 
+NEW RTC_TIME
+---------------
+
+An new defined rtc_time2 that extended from rtc_time for carry the daylight and
+timezone in structure:
+
+struct rtc_time2 {
+        int writemask;          /* define which value will be write */
+        struct rtc_time tm;     /* rtc_time items */
+        int tm_daylight;        /* Bit0: 1 = the time is affected by daylight savings time */
+                                /* Bit1: 1 = the time has been adjusted for daylight savings time */
+        long int tm_gmtoff;     /* Seconds east of UTC. */
+};
+
+The writemask field is used to define which values will be write when call
+RTC_SET_TIME2 ioctl:
+
+/* define for rtc_time2 write mask */
+#define RTC_TIME2_TIME         (1 << 0)
+#define RTC_TIME2_DAYLIGHT     (1 << 1)
+#define RTC_TIME2_GMTOFF       (1 << 2)
+
+#define RTC_RD_TIME2   _IOR('p', 0x15, struct rtc_time2)       /* Read RTC time 2      */
+#define RTC_SET_TIME2  _IOW('p', 0x16, struct rtc_time2)       /* Set RTC time 2       */
+
 SYSFS INTERFACE
 ---------------
 
@@ -98,10 +123,14 @@ IOCTL INTERFACE
 Here create 3 new ioctl functions for read/set timezone and read the
 capabilities of RTC interface.
 
-    *	RTC_RD_GMTOFF, RTC_SET_GMTOFF ... Used to read and set timezone value.
-	Due to support the GNU tm_gmtoff format, so the input/output value
-	is "Seconds east of UTC". RTC drivers, rtc-acpitad and rtc-efi, done
-	the data transfer work.
+    *	RTC_RD_TIME2, RTC_SET_TIME2 ... As RTC_RD_TIME and RTC_SET_TIME, this
+	2 new ioctl functions used to access RTC time through rtc_time2 structure.
+	RTC_SET_TIME2 will check writemask bitmask to write appropriate fields.
+
+    *	RTC_RD_GMTOFF, RTC_SET_GMTOFF (obsolete) ... Used to read and set
+	timezone value. Due to support the GNU tm_gmtoff format, so the
+	input/output value is "Seconds east of UTC". RTC drivers, rtc-acpitad
+	and rtc-efi, done the data transfer work.
 	The rtc-acpitad and rtc-efi driver also avoid to overwrite the timezone
 	field in their time struct in RTC_SET_TIME.
 
@@ -110,7 +139,7 @@ capabilities of RTC interface.
 	RTC interface. Application can early check does this interface support
 	Timezone or Daylight.
 
-CMOS RTC Not Present flag (removed the following logic)
+CMOS RTC Not Present flag (obsolete)
 -------------------------
 
 ACPI 5.0 spec defines a "CMOS RTC Not Present" flag in IA-PC Boot
